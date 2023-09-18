@@ -4,12 +4,33 @@ class MSQueue<E> : Queue<E> {
     private val head: AtomicReference<Node<E>>
     private val tail: AtomicReference<Node<E>>
 
+    init {
+        val dummy = Node<E>(null)
+        head = AtomicReference(dummy)
+        tail = AtomicReference(dummy)
+    }
     override fun enqueue(element: E) {
-        TODO("Implement me")
+        val node = Node(element)
+        while (true) {
+            val curTail = tail.get()
+            if (curTail.next.compareAndSet(null, node)) {
+                tail.compareAndSet(curTail, node)
+                return
+            } else {
+                val next = curTail.next.get() ?: continue
+                tail.compareAndSet(curTail, next)
+            }
+        }
     }
 
     override fun dequeue(): E? {
-        TODO("implement me")
+        while (true) {
+            val curHead = head.get()
+            val curHeadNext = head.get().next.get() ?: return null
+            if (head.compareAndSet(curHead, curHeadNext)) {
+                return curHeadNext.element.also { curHeadNext.element = null }
+            }
+        }
     }
 
     // FOR TEST PURPOSE, DO NOT CHANGE IT.
